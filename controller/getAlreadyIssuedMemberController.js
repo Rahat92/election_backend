@@ -24,7 +24,7 @@ exports.getAlreadyIssuedMembers = catchAsyncError(async (req, res, next) => {
       issuedMembers: results.recordset.map((el) => {
         return {
           ...el,
-          photo: `${req.protocol}://${req.hostname}:${"5000"}/images/${el.tx_org_id
+          photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id
             }.jpg`,
         };
       }),
@@ -74,7 +74,7 @@ exports.getAMember = catchAsyncError(async (req, res, next) => {
     });
   }
 
-  const memberImagePath = `${req.protocol}://${req.hostname}:${"5000"}/images/${result.tx_org_id
+  const memberImagePath = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${result.tx_org_id
     }.jpg`;
   res.status(200).json({
     status: "Success",
@@ -101,6 +101,7 @@ exports.generateSlip = catchAsyncError(async (req, res, next) => {
       .request()
       .query(`select * from T_MEMBER where tx_org_id ='${memberId}'`)
   ).recordset[0];
+
   if (!result) {
     return res.status(400).json({
       status: "Fail",
@@ -297,14 +298,14 @@ exports.getAllMembers = catchAsyncError(async (req, res, next) => {
           ? results.recordset.map((el) => {
             return {
               ...el,
-              photo: `${req.protocol}://${req.hostname}:${"5000"}/images/${el.tx_org_id
+              photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id
                 }.jpg`,
             };
           })
           : missingMembers.map((el) => {
             return {
               ...el,
-              photo: `${req.protocol}://${req.hostname}:${"5000"}/images/${el.tx_org_id
+              photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id
                 }.jpg`,
             };
           }),
@@ -317,6 +318,7 @@ exports.getAllMembers = catchAsyncError(async (req, res, next) => {
 
 exports.setIssueTrue = catchAsyncError(async (req, res) => {
   const { memberId } = req.params;
+  const currentUser = req.user;
   const pdfPath = path.join(__dirname, "../public/pdf", `${memberId}.pdf`);
   fs.unlink(pdfPath, (err) => {
     if (err) {
@@ -346,10 +348,10 @@ exports.setIssueTrue = catchAsyncError(async (req, res) => {
   let formattedDate = formatDate(currentDate);
 
 
-  const result = await pool
+  await pool
     .request()
     .query(
-      `update T_MEMBER set is_voter_slip='1', dtt_voter_slip='${formattedDate}' where tx_org_id='${memberId}'`
+      `update T_MEMBER set is_voter_slip='1', dtt_voter_slip='${formattedDate}', tx_email='${currentUser.tx_name}@gmail.com' where tx_org_id='${memberId}'`
     );
   res.status(200).json({
     status: "Success",

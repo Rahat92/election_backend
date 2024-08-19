@@ -19,6 +19,7 @@ exports.generateCounterReport = catchAsyncError(async (req, res) => {
     }
   })
   let uniqueCounterArr = []
+  let uniqueUserArr = []
   finalArr.forEach(item => {
     const index = uniqueCounterArr.findIndex(ele => ele.tx_counter === item.tx_counter);
     if (index !== -1) {
@@ -31,12 +32,29 @@ exports.generateCounterReport = catchAsyncError(async (req, res) => {
       })
     }
   })
-  const fResult = uniqueCounterArr.map(el => {
+  const fCounterResult = uniqueCounterArr.map(el => {
     return {
       ...el, noOfVoter: el.tx_org_id.length
     }
+  }).sort((a,b) => b.noOfVoter-a.noOfVoter)
+  finalArr.forEach(item => {
+    const index = uniqueUserArr.findIndex(ele => ele.tx_email === item.tx_email);
+    if (index !== -1) {
+      const findObj = { tx_email: uniqueUserArr[index].tx_email, tx_org_id: [...uniqueUserArr[index].tx_org_id, item.tx_org_id] };
+      uniqueUserArr[index] = findObj;
+    } else {
+      uniqueUserArr.push({
+        tx_email: item.tx_email,
+        tx_org_id: [item.tx_org_id]
+      })
+    }
   })
-  console.log(fResult)
+  const fUserResultArr= uniqueUserArr.map(el => {
+    return {
+      ...el, tx_email:el.tx_email==='?'?'No email':el.tx_email, noOfVoter: el.tx_org_id.length
+    }
+  }).sort((a,b) => b.noOfVoter-a.noOfVoter)
+
   try {
     // Render the HTML template with EJS
     const htmlContent =
@@ -87,23 +105,45 @@ exports.generateCounterReport = catchAsyncError(async (req, res) => {
           <div class = "page">
             <div class = "container">
               <div>
-                <p style = "text-decoration:underline">Report Generated D&T: ${new Date().toLocaleDateString()} | ${new Date().toLocaleTimeString()}</p>
+                <p style = "text-decoration:underline; position:absolute; top:0; left:0">Report Generated D&T: ${new Date().toLocaleDateString()} | ${new Date().toLocaleTimeString()}</p>
               </div>
+              <h1 style = "display:flex; justify-content:center;text-decoration:none">Dhaka Club Election 2023-2024</h1>
               <div>
-                <h1>Counterwise issued members No.</h1>
+                <h2>Counterwise issued members No.</h2>
                 <table class = 'table'>
                   <thead>
                     <tr>
-                      <td>Counter Name</td>
+                      <td style = "width:50%">Counter Name</td>
                       <td>No of Issued Members</td>
                     </tr>
                   </thead>
                   <tbody>
-                    ${fResult.map(el => {
+                    ${fCounterResult.map(el => {
                       return (
                         `
                           <tr>
                             <td>${el.tx_counter}</td>
+                            <td>${el.noOfVoter}</td>
+                          </tr>
+                        `
+                      )
+                    }).join('')}
+                  </tbody>
+                </table>
+                <h2 style = "margin-top:3rem; padding:0">Userwise issued members No.</h2>
+                <table class = 'table'>
+                  <thead>
+                    <tr>
+                      <td style = "width:50%">User Email</td>
+                      <td>No of Issued Members</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${fUserResultArr.map(el => {
+                      return (
+                        `
+                          <tr>
+                            <td>${el.tx_email}</td>
                             <td>${el.noOfVoter}</td>
                           </tr>
                         `
@@ -132,7 +172,6 @@ exports.generateCounterReport = catchAsyncError(async (req, res) => {
 
     // Close Puppeteer
     await browser.close();
-
     // Set response headers and send the PDF
     res.set({
       'Content-Type': 'application/pdf',

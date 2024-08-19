@@ -1,7 +1,7 @@
 const app = require('./app');
 const pool = require('./utils/dbConnection');
 
-const port = 5000;
+const port = process.env.PORT;
 app.listen(port, () => {
     console.log('App is running on port', port)
 })

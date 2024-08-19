@@ -1,15 +1,20 @@
 const jwt = require("jsonwebtoken");
 const catchAsyncError = require("../utils/catchAsyncError");
 const pool = require("../utils/dbConnection");
-
+const { promisify } = require('util')
 const tokenProducer = (id) => {
   return jwt.sign({ id }, process.env.SECRET_KEY || 'amarsonarbangla', {
     expiresIn: process.env.EXPIRE_TOKEN || '10d',
   });
 };
 
-const resAndSendToken = (user, res, statusCode) => {
-  const token = tokenProducer(user._id);
+const resAndSendToken = async (user, req, res, statusCode) => {
+  let clientIp = req.ip;
+  if (clientIp.startsWith('::ffff:')) {
+    clientIp = clientIp.replace('::ffff:', '');
+  }
+  const token = tokenProducer(user.id_user_key);
+  await pool.request().query(`update T_USER set tx_ip = '${clientIp}' where id_user_key = ${user.id_user_key}`)
   const cookieOptions = {
     expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
     httpOnly: true,
@@ -47,29 +52,46 @@ exports.login = catchAsyncError(async (req, res, next) => {
     });
   }
   const user = (await pool.request().input('tx_action_name', 'USER_LOGIN').input('tx_name', name).execute('SEL_user')).recordset[0];
-  if(!user || user.tx_password!==password){
+  if (!user || user.tx_password !== password) {
     return res.status(404).json({
-        status:'Fail',
-        message: 'Invalid User Or Password.'
+      status: 'Fail',
+      message: 'Invalid User Or Password.'
     })
   }
-  resAndSendToken(user, res, 200);
+  resAndSendToken(user, req, res, 200);
 });
 
-const protected = catchAsyncError(async(req,res, next) => {
+exports.protected = catchAsyncError(async (req, res, next) => {
   let token;
-  if(req.headers.authorization && req.headers.authorization.startsWith('Bearer')){
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1]
-  }else if(req.cookies.jwt){
-    token = req.cookies.jwt
-  }
-
-  if(!token){
+  } 
+  if (!token) {
     return res.status(401).json({
-      status:'Fail',
+      status: 'Fail',
       message: 'You are not logged in, please log in to get access.'
     })
   }
+  const decoded = await promisify(jwt.verify)(token, 'amarsonarbangla')
+  const currentUser = await (await pool.request().query(`select * from T_USER WHERE id_user_key = ${decoded.id}`)).recordset[0]
+  if (!currentUser) {
+    return res.status(404).json({
+      status: 'Fail',
+      message: 'The user belonging to this token does no longer exist.'
+    })
+  }
+  
+  let clientIp = req.ip;
+  if (clientIp.startsWith('::ffff:')) {
+    clientIp = clientIp.replace('::ffff:', '');
+  }
+  if(currentUser.tx_ip!==clientIp){
+    return res.status(400).json({
+      status:'Fail',
+      message: 'You can only log in from one computer'
+    })
+  }
+  req.user = currentUser
+  next()
 })
 
-exports.protect = catchAsyncError(async (req, res, next) => {});

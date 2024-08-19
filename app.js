@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors')
+const pool = require('./utils/dbConnection');
 const path = require('path')
 const globalErrorController = require('./controller/globalErrorController');
 const AppError = require('./utils/AppError');
@@ -10,6 +11,9 @@ const voterSlipIssueRouter = require('./router/voterSlipIssueRouter');
 const projectRouter = require('./router/projectRoutes');
 const reportRouter = require('./router/reportRoutes');
 const app = express();
+
+console.log('your ip', process.env.IP)
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(cors())

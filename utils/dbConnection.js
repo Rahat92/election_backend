@@ -1,8 +1,11 @@
 const mssql = require('mssql');
-
+const dotenv = require('dotenv');
+dotenv.config('./ecosystem.config.js')
+console.log('dbid', process.env.IP)
+dotenv.config()
 const config = {
     dirver: 'msnodesqlv8',
-    server: '192.168.1.101',
+    server: process.env.IP,
     database: 'VOTE_DCL_2024',
     user:'sa',
     password: '@dm1n321#',
