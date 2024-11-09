@@ -17,6 +17,8 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(cors())
+app.get('/favicon.ico', (req, res) => res.status(204));
+
 app.use('/api/v1/all-issued-member',issuedMemberRouter);
 app.use('/api/v1/project',projectRouter);
 app.use('/api/v1/voter-slip',voterSlipIssueRouter);
