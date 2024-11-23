@@ -1,6 +1,6 @@
 const AppError = require("../utils/AppError");
 const catchAsyncError = require("../utils/catchAsyncError");
-const puppeteer = require('puppeteer');
+const puppeteer = require("puppeteer");
 const pool = require("../utils/dbConnection");
 const fs = require("fs");
 const path = require("path");
@@ -24,8 +24,7 @@ exports.getAlreadyIssuedMembers = catchAsyncError(async (req, res, next) => {
       issuedMembers: results.recordset.map((el) => {
         return {
           ...el,
-          photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id
-            }.jpg`,
+          photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id}.jpg`,
         };
       }),
     },
@@ -74,17 +73,45 @@ exports.getAMember = catchAsyncError(async (req, res, next) => {
     });
   }
 
-  const memberImagePath = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${result.tx_org_id
-    }.jpg`;
+  let memberImagePath;
+  let memberPreviousImage;
+  let memberNewImagePath;
+  let memberUploadedImage;
+  if (!fs.existsSync(__dirname + `/../public/images/${result.tx_org_id}.jpg`)) {
+    memberImagePath = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/default_photo.png`;
+    memberPreviousImage = false;
+  } else {
+    memberImagePath = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${result.tx_org_id}.jpg`;
+    memberPreviousImage = true;
+  }
+  if (
+    !fs.existsSync(__dirname + `/../public/newImages/${result.tx_org_id}.jpg`)
+  ) {
+    memberNewImagePath = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/default_photo.png`;
+    memberUploadedImage = false;
+  } else {
+    memberNewImagePath = `${req.protocol}://${req.hostname}:${process.env.PORT}/newImages/${result.tx_org_id}.jpg`;
+    memberUploadedImage = true;
+  }
+
   res.status(200).json({
     status: "Success",
     data: {
       member: {
-        ...result, photo: memberImagePath, tx_counter: counters.find(el => {
-          if (parseInt(result.tx_org_sl) <= el?.ct_max && parseInt(result.tx_org_sl) >= el?.ct_min) {
-            return true;
-          }
-        })?.tx_macro || 'not assign yet'
+        ...result,
+        photo: memberImagePath,
+        newPhoto: memberNewImagePath,
+        memberPreviousImage,
+        memberUploadedImage,
+        tx_counter:
+          counters.find((el) => {
+            if (
+              parseInt(result.tx_org_sl) <= el?.ct_max &&
+              parseInt(result.tx_org_sl) >= el?.ct_min
+            ) {
+              return true;
+            }
+          })?.tx_macro || "not assign yet",
       },
     },
   });
@@ -128,11 +155,12 @@ exports.generateSlip = catchAsyncError(async (req, res, next) => {
 
   const writeStream = fs.createWriteStream(filePath);
   doc.pipe(writeStream);
-
+  const election_info = (await pool.request().query(`select * from T_PROJECT`))
+    .recordset[0];
   doc
     .font("Helvetica-Bold")
     .fontSize(55)
-    .text("OFFICE OF THE ELECTION COMMISION 2023-2024", { align: "center" });
+    .text(`OFFICE OF THE ELECTION COMMISION ${process.env.ELECTION_SESSION}`, { align: "center" });
 
   const logoPath = path.join(__dirname, "../public", "DCL.png");
   // doc.moveDown(0.5).image(logoPath, doc.page.width / 2.5, undefined, {
@@ -140,7 +168,7 @@ exports.generateSlip = catchAsyncError(async (req, res, next) => {
   // });
   doc
     .image(logoPath, 100, doc.y, { width: 135 })
-    .text(" Dhaka Club Election", doc.x + 220, doc.y + 25, { continued: true });
+    .text(process.env.ELECTION_NAME, doc.x + 220, doc.y + 25, { continued: true });
 
   doc
     .font("Helvetica-Bold")
@@ -153,7 +181,7 @@ exports.generateSlip = catchAsyncError(async (req, res, next) => {
   // const imagePath = path.join(__dirname, 'controller', `images/${tx_org_id}.jpg`);
   let imagePath = path.join(__dirname, "../public/images", `${memberId}.jpg`);
   if (!fs.existsSync(path.join(imagePath))) {
-    imagePath = path.join(__dirname, "../public", `default_photo.png`)
+    imagePath = path.join(__dirname, "../public", `default_photo.png`);
   }
   const imageWidth = 150 * 3.78;
   const docWidth = 250 * 3.78;
@@ -296,23 +324,21 @@ exports.getAllMembers = catchAsyncError(async (req, res, next) => {
       members:
         missingMembers?.length === 0
           ? results.recordset.map((el) => {
-            return {
-              ...el,
-              photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id
-                }.jpg`,
-            };
-          })
+              return {
+                ...el,
+                photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id}.jpg`,
+              };
+            })
           : missingMembers.map((el) => {
-            return {
-              ...el,
-              photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id
-                }.jpg`,
-            };
-          }),
+              return {
+                ...el,
+                photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id}.jpg`,
+              };
+            }),
     },
     missingPhotoId,
     totalDocuments: Number(results.output.TotalDocuments),
-    totalPages: Number(results.output.TotalPages || 0)
+    totalPages: Number(results.output.TotalPages || 0),
   });
 });
 
@@ -346,7 +372,6 @@ exports.setIssueTrue = catchAsyncError(async (req, res) => {
 
   let currentDate = new Date();
   let formattedDate = formatDate(currentDate);
-
 
   await pool
     .request()
@@ -392,8 +417,10 @@ exports.resetMember = catchAsyncError(async (req, res) => {
   const result = await pool
     .request()
     .query(
-      `update T_MEMBER set is_voter_slip = '${is_voter_slip === "true" ? 1 : 0
-      }', ${isVoterSlipIssueChange ? `dtt_voter_slip='${formattedDate}',` : ""
+      `update T_MEMBER set is_voter_slip = '${
+        is_voter_slip === "true" ? 1 : 0
+      }', ${
+        isVoterSlipIssueChange ? `dtt_voter_slip='${formattedDate}',` : ""
       } tx_name='${tx_name}', tx_org_sl='${tx_org_sl}' where tx_org_id = '${tx_org_id}'`
     );
   res.status(200).json({
@@ -402,16 +429,25 @@ exports.resetMember = catchAsyncError(async (req, res) => {
   });
 });
 
-
 exports.getProjectInfo = catchAsyncError(async (req, res, next) => {
-  const result = (await pool.request().query(`select * from T_PROJECT`)).recordset[0];
+  const result = (await pool.request().query(`select * from T_PROJECT`))
+    .recordset[0];
   res.status(200).json({
-    status: 'Success',
+    status: "Success",
     data: {
-      project: result
-    }
-  })
-})
+      project: result,
+    },
+  });
+});
 
-
-
+exports.updateMember = catchAsyncError(async (req, res) => {
+  console.log("controller", req.file);
+  console.log('Hello world')
+  res.status(200).json({
+    status: "Success",
+    message: "Image saved Successfully",
+    data: {
+      image: `${req.protocol}://${req.hostname}:${process.env.PORT}/img/image1.jpeg`,
+    },
+  });
+});
