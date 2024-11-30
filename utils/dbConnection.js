@@ -7,7 +7,7 @@ const config = {
     server: process.env.DB_IP,
     database: 'VOTE_DRCL_2024',
     user:process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    password: '@dm1n321#',
     options: {
         encrypt: false,
         enableArithAbort: false
