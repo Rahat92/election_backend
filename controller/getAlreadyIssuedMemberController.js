@@ -1,4 +1,4 @@
-const AppError = require("../utils/AppError");
+// const AppError = require("../utils/AppError");
 const catchAsyncError = require("../utils/catchAsyncError");
 const puppeteer = require("puppeteer");
 const pool = require("../utils/dbConnection");

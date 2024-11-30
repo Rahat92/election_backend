@@ -3,7 +3,7 @@ const cors = require('cors')
 const pool = require('./utils/dbConnection');
 const path = require('path')
 const globalErrorController = require('./controller/globalErrorController');
-const AppError = require('./utils/AppError');
+// const AppError = require('./utils/AppError');
 const issuedMemberRouter = require('./router/issuedMemberRoutes');
 const memberRouter = require('./router/memberRoutes');
 const authRouter = require('./router/authRoutes');
@@ -27,7 +27,11 @@ app.use('/api/v1/report',reportRouter);
 app.use('/api/v1/auth',authRouter);
 app.use('/api/v1/result', resultRouter)
 app.all('*', (req,res, next) => {
-    return next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404))
+    // return next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404))
+    res.status(404).json({
+        status:'fail',
+        message: `Can't find ${req.originalUrl} on this server!`
+    })
 })
 
 
