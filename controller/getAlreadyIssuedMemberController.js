@@ -22,9 +22,19 @@ exports.getAlreadyIssuedMembers = catchAsyncError(async (req, res, next) => {
     result: results.recordset.length,
     data: {
       issuedMembers: results.recordset.map((el) => {
+        let memberImagePath;
+        if (
+          !fs.existsSync(
+            __dirname + `/../public/images/${el.tx_org_id}.jpg`
+          )
+        ) {
+          memberImagePath = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/default_photo.png`;
+        } else {
+          memberImagePath = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id}.jpg`;
+        }
         return {
           ...el,
-          photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id}.jpg`,
+          photo: memberImagePath,
         };
       }),
     },
@@ -73,10 +83,10 @@ exports.getAMember = catchAsyncError(async (req, res, next) => {
     });
   }
 
-  let memberImagePath;
   let memberPreviousImage;
   let memberNewImagePath;
   let memberUploadedImage;
+  let memberImagePath;
   if (!fs.existsSync(__dirname + `/../public/images/${result.tx_org_id}.jpg`)) {
     memberImagePath = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/default_photo.png`;
     memberPreviousImage = false;
@@ -160,22 +170,26 @@ exports.generateSlip = catchAsyncError(async (req, res, next) => {
   doc
     .font("Helvetica-Bold")
     .fontSize(55)
-    .text(`OFFICE OF THE ELECTION COMMISION ${process.env.ELECTION_SESSION}`, { align: "center" });
+    .text(`OFFICE OF THE ELECTION COMMISION ${process.env.ELECTION_SESSION}`, {
+      align: "center",
+    });
 
-  const logoPath = path.join(__dirname, "../public", "DCL.png");
+  const logoPath = path.join(__dirname, "../public", "logo.png");
   // doc.moveDown(0.5).image(logoPath, doc.page.width / 2.5, undefined, {
   //   fit: [250, 250],
   // });
   doc
     .image(logoPath, 100, doc.y, { width: 135 })
-    .text(process.env.ELECTION_NAME, doc.x + 220, doc.y + 25, { continued: true });
+    .text(process.env.ELECTION_NAME, doc.x + 240, doc.y + 25, {
+      continued: true,
+    });
 
   doc
     .font("Helvetica-Bold")
-    .moveDown(0.5)
-    .fontSize(60)
+    .moveDown(1.5)
+    .fontSize(45)
     // .text("Dhaka Club Election", { align: "center" })
-    .text("VOTER SLIP", 100, undefined, { align: "center" });
+    .text("VOTER SLIP", -70, undefined, { align: "center" });
   doc.rect(doc.x + 45, 225, 410, 100).stroke();
 
   // const imagePath = path.join(__dirname, 'controller', `images/${tx_org_id}.jpg`);
@@ -187,10 +201,14 @@ exports.generateSlip = catchAsyncError(async (req, res, next) => {
   const docWidth = 250 * 3.78;
   const x = (docWidth - imageWidth) / 1.9 + 50;
 
-  doc.moveDown(0.5).image(imagePath, x, doc.y, {
+  doc.moveDown(2).image(imagePath, x, doc.y, {
     fit: [imageWidth, imageWidth],
   });
   // Add person name
+  doc.moveDown();
+  doc.moveDown();
+  doc.moveDown();
+  doc.moveDown();
   doc.moveDown();
   doc.moveDown();
   doc.moveDown();
@@ -324,15 +342,25 @@ exports.getAllMembers = catchAsyncError(async (req, res, next) => {
       members:
         missingMembers?.length === 0
           ? results.recordset.map((el) => {
+              let memberImagePath;
+              if (
+                !fs.existsSync(
+                  __dirname + `/../public/images/${el.tx_org_id}.jpg`
+                )
+              ) {
+                memberImagePath = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/default_photo.png`;
+              } else {
+                memberImagePath = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id}.jpg`;
+              }
               return {
                 ...el,
-                photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id}.jpg`,
+                photo: memberImagePath,
               };
             })
           : missingMembers.map((el) => {
               return {
                 ...el,
-                photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${el.tx_org_id}.jpg`,
+                photo: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/default_photo.png`,
               };
             }),
     },
@@ -386,7 +414,7 @@ exports.setIssueTrue = catchAsyncError(async (req, res) => {
 
 exports.resetMember = catchAsyncError(async (req, res) => {
   // const { memberId } = req.params;
-
+  console.log("Hello rahat");
   const {
     tx_name,
     tx_org_id,
@@ -395,6 +423,7 @@ exports.resetMember = catchAsyncError(async (req, res) => {
     id_member_key,
     isVoterSlipIssueChange,
   } = req.body;
+  console.log(req.body);
   function pad(number, length) {
     return number.toString().padStart(length, "0");
   }
@@ -442,7 +471,7 @@ exports.getProjectInfo = catchAsyncError(async (req, res, next) => {
 
 exports.updateMember = catchAsyncError(async (req, res) => {
   console.log("controller", req.file);
-  console.log('Hello world')
+  console.log("Hello world");
   res.status(200).json({
     status: "Success",
     message: "Image saved Successfully",

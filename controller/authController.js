@@ -51,7 +51,9 @@ exports.login = catchAsyncError(async (req, res, next) => {
       message: "Email or password is missing",
     });
   }
+  console.log(name)
   const user = (await pool.request().input('tx_action_name', 'USER_LOGIN').input('tx_name', name).execute('SEL_user')).recordset[0];
+  console.log(55, user)
   if (!user || user.tx_password !== password) {
     return res.status(404).json({
       status: 'Fail',

@@ -4,10 +4,10 @@ dotenv.config('./ecosystem.config.js')
 dotenv.config()
 const config = {
     dirver: 'msnodesqlv8',
-    server: process.env.IP,
+    server: process.env.DB_IP,
     database: 'VOTE_DRCL_2024',
-    user:'sa',
-    password: '@dm1n321#',
+    user:process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
     options: {
         encrypt: false,
         enableArithAbort: false
