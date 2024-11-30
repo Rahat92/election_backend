@@ -73,7 +73,7 @@ exports.getAMember = catchAsyncError(async (req, res, next) => {
     await pool
       .request()
       .query(
-        `select * from T_MEMBER where tx_org_id ='${finalString}' or tx_industry_name='${memberId}'`
+        `select * from T_MEMBER where tx_org_id ='${memberId}' or tx_industry_name='${memberId}'`
       )
   ).recordset[0];
   if (!result) {
