@@ -19,11 +19,12 @@ group by mem.tx_group_name,mem.VoterSL,mem.memname order by  mem.tx_group_name d
   res.status(200).json({
     status: "Success",
     data: result.recordset.map((el) => {
+      console.log(el)
       let memberImagePath;
       if (!fs.existsSync(__dirname + `/../public/images/${el.VoterSL}.jpg`)) {
         memberImagePath = `${req.protocol}://${req.hostname}/images/default_photo.png`;
       } else {
-        memberImagePath = `${req.protocol}://${req.hostname}/images/${el.tx_org_id}.jpg`;
+        memberImagePath = `${req.protocol}://${req.hostname}/images/${el.VoterSL}.jpg`;
       }
       return {
         tx_group_name: el.tx_group_name,
