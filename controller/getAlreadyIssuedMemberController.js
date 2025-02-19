@@ -28,9 +28,9 @@ exports.getAlreadyIssuedMembers = catchAsyncError(async (req, res, next) => {
             __dirname + `/../public/images/${el.tx_org_id}.jpg`
           )
         ) {
-          memberImagePath = `${req.protocol}://${req.hostname}/images/default_photo.png`;
+          memberImagePath = `${req.protocol}://${req.hostname}${process.env.DEV_ENV === 'DEVELOPMENT' ? ":" + process.env.PORT : ''}/images/default_photo.png`;
         } else {
-          memberImagePath = `${req.protocol}://${req.hostname}/images/${el.tx_org_id}.jpg`;
+          memberImagePath = `${req.protocol}://${req.hostname}${process.env.DEV_ENV === 'DEVELOPMENT' ? ":" + process.env.PORT : ''}/images/${el.tx_org_id}.jpg`;
         }
         return {
           ...el,
@@ -88,19 +88,19 @@ exports.getAMember = catchAsyncError(async (req, res, next) => {
   let memberUploadedImage;
   let memberImagePath;
   if (!fs.existsSync(__dirname + `/../public/images/${result.tx_org_id}.jpg`)) {
-    memberImagePath = `${req.protocol}://${req.hostname}/images/default_photo.png`;
+    memberImagePath = `${req.protocol}://${req.hostname}${process.env.DEV_ENV === 'DEVELOPMENT' ? ":" + process.env.PORT : ''}/images/default_photo.png`;
     memberPreviousImage = false;
   } else {
-    memberImagePath = `${req.protocol}://${req.hostname}/images/${result.tx_org_id}.jpg`;
+    memberImagePath = `${req.protocol}://${req.hostname}${process.env.DEV_ENV === 'DEVELOPMENT' ? ":" + process.env.PORT : ''}/images/${result.tx_org_id}.jpg`;
     memberPreviousImage = true;
   }
   if (
     !fs.existsSync(__dirname + `/../public/newImages/${result.tx_org_id}.jpg`)
   ) {
-    memberNewImagePath = `${req.protocol}://${req.hostname}/images/default_photo.png`;
+    memberNewImagePath = `${req.protocol}://${req.hostname}${process.env.DEV_ENV === 'DEVELOPMENT' ? ":" + process.env.PORT : ''}/images/default_photo.png`;
     memberUploadedImage = false;
   } else {
-    memberNewImagePath = `${req.protocol}://${req.hostname}/newImages/${result.tx_org_id}.jpg`;
+    memberNewImagePath = `${req.protocol}://${req.hostname}${process.env.DEV_ENV === 'DEVELOPMENT' ? ":" + process.env.PORT : ''}/newImages/${result.tx_org_id}.jpg`;
     memberUploadedImage = true;
   }
 
@@ -342,27 +342,27 @@ exports.getAllMembers = catchAsyncError(async (req, res, next) => {
       members:
         missingMembers?.length === 0
           ? results.recordset.map((el) => {
-              let memberImagePath;
-              if (
-                !fs.existsSync(
-                  __dirname + `/../public/images/${el.tx_org_id}.jpg`
-                )
-              ) {
-                memberImagePath = `${req.protocol}://${req.hostname}/images/default_photo.png`;
-              } else {
-                memberImagePath = `${req.protocol}://${req.hostname}/images/${el.tx_org_id}.jpg`;
-              }
-              return {
-                ...el,
-                photo: memberImagePath,
-              };
-            })
+            let memberImagePath;
+            if (
+              !fs.existsSync(
+                __dirname + `/../public/images/${el.tx_org_id}.jpg`
+              )
+            ) {
+              memberImagePath = `${req.protocol}://${req.hostname}${process.env.DEV_ENV === 'DEVELOPMENT' ? ":" + process.env.PORT : ''}/images/default_photo.png`;
+            } else {
+              memberImagePath = `${req.protocol}://${req.hostname}${process.env.DEV_ENV === 'DEVELOPMENT' ? ":" + process.env.PORT : ''}/images/${el.tx_org_id}.jpg`;
+            }
+            return {
+              ...el,
+              photo: memberImagePath,
+            };
+          })
           : missingMembers.map((el) => {
-              return {
-                ...el,
-                photo: `${req.protocol}://${req.hostname}/images/default_photo.png`,
-              };
-            }),
+            return {
+              ...el,
+              photo: `${req.protocol}://${req.hostname}${process.env.DEV_ENV === 'DEVELOPMENT' ? ":" + process.env.PORT : ''}/images/default_photo.png`,
+            };
+          }),
     },
     missingPhotoId,
     totalDocuments: Number(results.output.TotalDocuments),
@@ -446,10 +446,8 @@ exports.resetMember = catchAsyncError(async (req, res) => {
   const result = await pool
     .request()
     .query(
-      `update T_MEMBER set is_voter_slip = '${
-        is_voter_slip === "true" ? 1 : 0
-      }', ${
-        isVoterSlipIssueChange ? `dtt_voter_slip='${formattedDate}',` : ""
+      `update T_MEMBER set is_voter_slip = '${is_voter_slip === "true" ? 1 : 0
+      }', ${isVoterSlipIssueChange ? `dtt_voter_slip='${formattedDate}',` : ""
       } tx_name='${tx_name}', tx_org_sl='${tx_org_sl}' where tx_org_id = '${tx_org_id}'`
     );
   res.status(200).json({
@@ -476,7 +474,7 @@ exports.updateMember = catchAsyncError(async (req, res) => {
     status: "Success",
     message: "Image saved Successfully",
     data: {
-      image: `${req.protocol}://${req.hostname}/img/image1.jpeg`,
+      image: `${req.protocol}://${req.hostname}${process.env.DEV_ENV === 'DEVELOPMENT' ? ":" + process.env.PORT : ''}/img/image1.jpeg`,
     },
   });
 });

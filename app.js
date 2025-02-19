@@ -11,6 +11,7 @@ const voterSlipIssueRouter = require('./router/voterSlipIssueRouter');
 const projectRouter = require('./router/projectRoutes');
 const reportRouter = require('./router/reportRoutes');
 const resultRouter = require('./router/resultRoutes');
+const fileUploadRouter = require('./router/fileUploadRoutes');
 const app = express();
 
 
@@ -33,6 +34,7 @@ app.use('/api/v1/all-members',memberRouter);
 app.use('/api/v1/report',reportRouter);
 app.use('/api/v1/auth',authRouter);
 app.use('/api/v1/result', resultRouter)
+app.use('/api/v1/upload_candidate_files', fileUploadRouter)
 
 app.all('*', (req,res, next) => {
     // return next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404))

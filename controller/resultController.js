@@ -25,9 +25,9 @@ ORDER BY tx_group_name DESC, NOV DESC, CONVERT(numeric, tx_candidate_sl)`);
     data: result.recordset.map((el) => {
       let memberImagePath;
       if (!fs.existsSync(__dirname + `/../public/images/${el.VoterSL}.jpg`)) {
-        memberImagePath = `${req.protocol}://${req.hostname}/images/default_photo.png`;
+        memberImagePath = `${req.protocol}://${req.hostname}${process.env.DEV_ENV==='development'?":"+process.env.PORT:''}/images/default_photo.png`;
       } else {
-        memberImagePath = `${req.protocol}://${req.hostname}/images/${el.VoterSL}.jpg`;
+        memberImagePath = `${req.protocol}://${req.hostname}${process.env.DEV_ENV==='development'?":"+process.env.PORT:''}/images/${el.VoterSL}.jpg`;
       }
       return {
         tx_group_name: el.tx_group_name,
